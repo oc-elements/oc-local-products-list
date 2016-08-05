@@ -21,8 +21,48 @@ Element to display a list of local products
       :host {
         display: block;
       }
+
+      paper-material {
+        background-color: #fff;
+        padding: 10px;
+      }
     </style>
-    <h2>Hello [[prop1]]</h2>
+
+    <paper-material>
+      <div hidden$="[[ actionsHidden ]]">
+        <paper-button id="_newExtraSetButton" class="new-extra-set-button" on-tap="_onCreateTapped">New Extra Set</paper-button>
+      </div>
+      <oc-grid-controls data="[[ items ]]" total-count="[[ totalItems ]]" num-entries="[[ pageSize ]]">
+        <iron-data-table
+                id="dataTable"
+                selection-enabled="[[ multiSelect ]]"
+                multi-selection="[[ multiSelect ]]"
+                selected-items="{{ selectedItems }}"
+                selected-item="{{ _selectedItem }}"
+                current-page="[[ currentPage ]]"
+                loading="{{ loading }}">
+          <data-table-column name="Name" sort-by="name">
+            <template>[[item.name]]</template>
+          </data-table-column>
+          <data-table-column name="Price" sort-by="price">
+            <template>[[item.price]]</template>
+          </data-table-column>
+          <data-table-column name="SKU" sort-by="sku">
+            <template is="dom-repeat" item="[[item.sku]]" as="extra">[[extra.sku]]</template>
+          </data-table-column>
+          <data-table-column name="Availability" sort-by="availability">
+            <template>
+
+            </template>
+          </data-table-column>
+          <data-table-column name="Tags" sort-by="tags">
+            <template>
+
+            </template>
+          </data-table-column>
+        </iron-data-table>
+      </oc-grid-controls>
+    </paper-material>
   </template>
 
   <script>
