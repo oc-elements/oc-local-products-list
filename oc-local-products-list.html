@@ -4,15 +4,17 @@
 <link rel="import" href="../iron-data-table/iron-data-table.html">
 <link rel="import" href="../oc-grid-controls/oc-grid-controls.html">
 <link rel="import" href="../oc-iron-data-table-styles/oc-iron-data-table-styles.html">
-<link rel="import" href="../oc-paginator/oc-paginator.html">
+<link rel="import" href="../oc-paginator/mercury-paginator.html">
 <link rel="import" href="../paper-tags-input/paper-tags-input.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-button/paper-button.html">
 
 
 <!--
 `oc-local-products-list`
 Element to display a list of local products
 
-@demo demo/index.html 
+@demo demo/index.html
 -->
 
 <dom-module id="oc-local-products-list">
@@ -26,20 +28,47 @@ Element to display a list of local products
         background-color: #fff;
         padding: 10px;
       }
+
+      #dataTable data-table-row[even] {
+        background-color: #eee;
+      }
+
+      .tag-container {
+        width: 100%;
+      }
+
+      .tag {
+        display: block;
+        border: 1px solid #ddd;
+        background: #f8f8f8;
+        border-radius : 5px;
+        padding: 3px 5px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        text-align: center;
+        font-size: 11px;
+        width: 100%;
+      }
+
+      .active {
+        border-color: forestgreen;
+        background: lightgreen;
+      }
+
+      #dataTable data-table-cell:not([header]) {
+        height: auto;
+      }
+
     </style>
 
+    <oc-product-api id="prodApi"></oc-product-api>
+
     <paper-material>
-      <div hidden$="[[ actionsHidden ]]">
-        <paper-button id="_newExtraSetButton" class="new-extra-set-button" on-tap="_onCreateTapped">New Extra Set</paper-button>
-      </div>
-      <oc-grid-controls data="[[ items ]]" total-count="[[ totalItems ]]" num-entries="[[ pageSize ]]">
+      <paper-button id="newProductButton" on-tap="_onCreateTapped" raised>New Product</paper-button>
+      <oc-grid-controls data="[[ _items ]]" total-count="[[ _totalItems ]]" num-entries="[[ _pageSize ]]">
         <iron-data-table
                 id="dataTable"
-                selection-enabled="[[ multiSelect ]]"
-                multi-selection="[[ multiSelect ]]"
-                selected-items="{{ selectedItems }}"
-                selected-item="{{ _selectedItem }}"
-                current-page="[[ currentPage ]]"
+                current-page="[[ _currentPage ]]"
                 loading="{{ loading }}">
           <data-table-column name="Name" sort-by="name">
             <template>[[item.name]]</template>
@@ -48,16 +77,55 @@ Element to display a list of local products
             <template>[[item.price]]</template>
           </data-table-column>
           <data-table-column name="SKU" sort-by="sku">
-            <template is="dom-repeat" item="[[item.sku]]" as="extra">[[extra.sku]]</template>
+            <template>[[item.sku]]</template>
           </data-table-column>
-          <data-table-column name="Availability" sort-by="availability">
+          <data-table-column name="Product Active" align-center width="130px">
             <template>
+              <div class="tag-container">
+                <div class$="tag {{_conditionalClass(item.enabled)}}">
+                  <span hidden$="{{!item.enabled}}">Enabled</span>
+                  <span hidden$="{{item.enabled}}">Disabled</span>
+                </div>
+                <div class$="tag {{_conditionalClass(item.available)}}">
+
+                  <span hidden$="{{!item.available}}">Available</span>
+                  <span hidden$="{{item.available}}"> Not Available</span>
+                </div>
+                <div class$="tag {{_conditionalClass(item.availableOnline)}}">
+
+                  <span hidden$="{{!item.availableOnline}}">Available Online</span>
+                  <span hidden$="{{item.availableOnline}}">Not Available Online</span>
+                </div>
+              </div>
 
             </template>
           </data-table-column>
           <data-table-column name="Tags" sort-by="tags">
             <template>
-
+              <div hidden$="{{_hasTags(item.tags)}}">
+                No Tags
+              </div>
+              <div hidden$="{{!_hasTags(item.tags)}}">
+                <paper-tags-input tags="{{item.tags}}" enableRemove="false"></paper-tags-input>
+              </div>
+            </template>
+          </data-table-column>
+          <data-table-column name="# Images" sort-by="images">
+            <template>
+              [[item.images.length]]
+            </template>
+          </data-table-column>
+          <data-table-column name="Stock" sort-by="stock">
+            <template>
+              <span hidden$="{{!_usesStockLevel(item.stockLevel)}}">N/A</span>
+              <span hidden$="{{_usesStockLevel(item.stockLevel)}}">[[item.stockLevel]]</span>
+            </template>
+          </data-table-column>
+          <data-table-column name="Actions">
+            <template>
+              <div data-option-object$="[[ item ]]" >
+                <paper-icon-button id="edit" icon="create" title="Edit Product"  on-tap="_actionHandler"></paper-icon-button>
+              </div>
             </template>
           </data-table-column>
         </iron-data-table>
@@ -71,10 +139,60 @@ Element to display a list of local products
       is: 'oc-local-products-list',
 
       properties: {
-        prop1: {
-          type: String,
-          value: 'oc-local-products-list',
-        },
+        organisationId : Number,
+        loading: {
+          type: Boolean,
+          notify: true
+        }
+
+      },
+
+      observers: [
+        'refresh(organisationId)'
+      ],
+
+      refresh: function() {
+        if (this.organisationId) {
+          this.loading = true;
+          this._getProducts(1, 10);
+        }
+      },
+
+      _getProducts : function(page, pageSize) {
+        this.loading = true;
+        this.$.prodApi.getProducts(page, pageSize)
+                .then(function(request) {
+                  this._items = request.response.results;
+                  this._totalItems = request.response.count;
+                  this._currentPage = page;
+                  this._pageSize = pageSize;
+                  console.log("items", this._items);
+                }.bind(this))
+                .catch(this.fire.bind(this, 'extra-set-error', 'Failed to load extra sets'))
+                .finally(this.set.bind(this, 'loading', false));
+
+      },
+
+      _usesStockLevel : function(stockLevel){
+        return (stockLevel === null);
+      },
+
+      _conditionalClass: function(active) {
+        return active ? 'active' : '';
+      },
+
+      _hasTags : function(tagsArr){
+        return (tagsArr && tagsArr.length > 0)
+      },
+
+      _actionHandler: function(e) {
+        var extraObj = JSON.parse(Polymer.dom(event).localTarget.parentElement.getAttribute('data-option-object')),
+                action = e.target.getAttribute('id');
+        this.fire(action, extraObj);
+      },
+
+      _onCreateTapped: function() {
+        this.fire('create');
       },
 
     });
