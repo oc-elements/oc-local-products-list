@@ -166,9 +166,8 @@ Element to display a list of local products
                   this._totalItems = request.response.count;
                   this._currentPage = page;
                   this._pageSize = pageSize;
-                  console.log("items", this._items);
                 }.bind(this))
-                .catch(this.fire.bind(this, 'extra-set-error', 'Failed to load extra sets'))
+                .catch(this.fire.bind(this, 'extra-set-error', 'Failed to load products'))
                 .finally(this.set.bind(this, 'loading', false));
 
       },
