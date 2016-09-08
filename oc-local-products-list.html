@@ -5,7 +5,7 @@
 <link rel="import" href="../oc-grid-controls/oc-grid-controls.html">
 <link rel="import" href="../oc-iron-data-table-styles/oc-iron-data-table-styles.html">
 <link rel="import" href="../oc-paginator/mercury-paginator.html">
-<link rel="import" href="../paper-tags-input/paper-tags-input.html">
+<link rel="import" href="../oc-tag-list/oc-tag-list.html">
 <link rel="import" href="../paper-material/paper-material.html">
 <link rel="import" href="../paper-button/paper-button.html">
 
@@ -106,7 +106,7 @@ Element to display a list of local products
                 No Tags
               </div>
               <div hidden$="{{!_hasTags(item.tags)}}">
-                <paper-tags-input tags="{{item.tags}}" enableRemove="false"></paper-tags-input>
+                <oc-tag-list tag-list="[[item.tags]]"></oc-tag-list>
               </div>
             </template>
           </data-table-column>

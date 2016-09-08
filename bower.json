@@ -11,7 +11,7 @@
     "oc-paginator": "git://github.com/oc-elements/oc-paginator.git#1.x",
     "oc-grid-controls": "git://github.com/oc-elements/oc-grid-controls#1.x",
     "paper-material": "PolymerElements/paper-material#^1.0.6",
-    "paper-tags-input": "^1.2.2"
+    "oc-tag-list": "git://github.com/oc-elements/oc-tag-list.git#1.x"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
